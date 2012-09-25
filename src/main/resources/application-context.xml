@@ -9,7 +9,6 @@
     <context:component-scan base-package="nl.tweeenveertig.openstack"/>
     <mvc:annotation-driven/>
 
-    <mvc:view-controller path="/" view-name="index"/>
     <mvc:resources mapping="/images/**" location="/images/"/>
 
     <bean id="viewResolver" class="org.springframework.web.servlet.view.UrlBasedViewResolver">
