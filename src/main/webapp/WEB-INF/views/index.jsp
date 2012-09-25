@@ -65,8 +65,7 @@
 
     <form method="post" action="${path}/upload" enctype="multipart/form-data">
         <p>
-            <label>File: <input type="file" name="file" size="60"/></label><br/>
-            <input type="submit" value="Upload"/>
+            <label>File: <input type="file" name="file" size="60"/></label> <input type="submit" value="Upload"/>
         </p>
     </form>
 
