@@ -115,7 +115,7 @@
 
     <form method="post" action="${path}/reset">
         <p>
-            This is not a usecase, but a button to clear all uploaded data: <input type="submit" value="Reset"/>
+            This is not a use case, but a button to clear all uploaded data: <input type="submit" value="Reset"/>
         </p>
     </form>
 </section>
