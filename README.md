@@ -20,4 +20,4 @@ To see this project in action:
 4. Point your browser to [http://localhost:8081/](http://localhost:8081/)
 
 
-To see how you can do all this yourself, have a look at the class `nl.tweeenveertig.openstack.tutorial.StreamingController`.
+To see how you can do all this yourself, have a look at the class `org.javaswift.joss.tutorial.StreamingController`.

@@ -1,4 +1,4 @@
-package nl.tweeenveertig.openstack.tutorial;
+package org.javaswift.joss.tutorial;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,9 +6,10 @@ import java.io.PushbackInputStream;
 import java.util.ResourceBundle;
 
 import eu.medsea.mimeutil.MimeUtil;
-import nl.tweeenveertig.openstack.client.Account;
-import nl.tweeenveertig.openstack.client.StoredObject;
-import nl.tweeenveertig.openstack.client.impl.ClientImpl;
+import org.javaswift.joss.client.factory.AccountConfig;
+import org.javaswift.joss.client.factory.AccountFactory;
+import org.javaswift.joss.model.Account;
+import org.javaswift.joss.model.StoredObject;
 import org.springframework.stereotype.Service;
 
 /**
@@ -74,11 +75,15 @@ public class StorageProvider {
         if (account == null) {
 
             ResourceBundle credentials = ResourceBundle.getBundle("credentials");
-            String tenant = credentials.getString("tenant");
-            String username = credentials.getString("username");
-            String password = credentials.getString("password");
-            String auth_url = credentials.getString("auth_url");
-            account = new ClientImpl().authenticate(tenant, username, password, auth_url);
+            AccountConfig config = new AccountConfig();
+            config.setTenant(credentials.getString("tenant"));
+            config.setUsername(credentials.getString("username"));
+            config.setPassword(credentials.getString("password"));
+            config.setAuthUrl(credentials.getString("auth_url"));
+            config.setMock(true);
+            AccountFactory factory = new AccountFactory();
+            factory.setConfig(config);
+            account = factory.createAccount();
         }
         return account;
     }

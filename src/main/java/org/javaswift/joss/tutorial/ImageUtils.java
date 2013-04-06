@@ -1,4 +1,4 @@
-package nl.tweeenveertig.openstack.tutorial;
+package org.javaswift.joss.tutorial;
 
 import static java.awt.RenderingHints.KEY_INTERPOLATION;
 import static java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR;
