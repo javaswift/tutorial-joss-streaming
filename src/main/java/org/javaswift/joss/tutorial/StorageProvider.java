@@ -75,15 +75,13 @@ public class StorageProvider {
         if (account == null) {
 
             ResourceBundle credentials = ResourceBundle.getBundle("credentials");
-            AccountConfig config = new AccountConfig();
-            config.setTenant(credentials.getString("tenant"));
-            config.setUsername(credentials.getString("username"));
-            config.setPassword(credentials.getString("password"));
-            config.setAuthUrl(credentials.getString("auth_url"));
-            config.setMock(true);
-            AccountFactory factory = new AccountFactory();
-            factory.setConfig(config);
-            account = factory.createAccount();
+            AccountConfig config = new AccountConfig()
+                    .setTenant(credentials.getString("tenant"))
+                    .setUsername(credentials.getString("username"))
+                    .setPassword(credentials.getString("password"))
+                    .setAuthUrl(credentials.getString("auth_url"))
+                    .setMock(true);
+            account = new AccountFactory(config).createAccount();
         }
         return account;
     }
