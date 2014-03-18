@@ -1,4 +1,3 @@
-<%@ page import="org.javaswift.joss.tutorial.StorageProvider" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html>
@@ -49,7 +48,7 @@
     </p>
     <p>
         Start this use case (i.e. download a file) by clicking this link:
-        <a href="${path}/download/<%=StorageProvider.USE_CASE_1_OBJECT%>">download</a>
+        <a href="${path}/download/testObject1">download</a>
     </p>
 </section>
 
@@ -72,7 +71,7 @@
     <%--@elvariable id="useCase2_ObjectExists" type="java.lang.Boolean"--%>
     <c:if test="${useCase2_ObjectExists}">
         <ul>
-            <li>View the uploaded object: <a href="${path}/download/<%=StorageProvider.USE_CASE_2_OBJECT%>">download</a></li>
+            <li>View the uploaded object: <a href="${path}/download/testObject2">download</a></li>
         </ul>
     </c:if>
 
@@ -98,12 +97,12 @@
         <%--@elvariable id="useCase3_Object1Exists" type="java.lang.Boolean"--%>
         <%--@elvariable id="useCase3_Object2Exists" type="java.lang.Boolean"--%>
         <ul>
-            <li>View the source object: <a href="${path}/download/<%=StorageProvider.USE_CASE_3_SRC_OBJECT%>">download</a></li>
+            <li>View the source object: <a href="${path}/download/testObject3-i">download</a></li>
             <c:if test="${useCase3_Object1Exists}">
-                <li>View the first generated object: <a href="${path}/download/<%=StorageProvider.USE_CASE_3_DEST_OBJECT_1%>">download</a></li>
+                <li>View the first generated object: <a href="${path}/download/testObject3-o1">download</a></li>
             </c:if>
             <c:if test="${useCase3_Object2Exists}">
-                <li>View the second generated object: <a href="${path}/download/<%=StorageProvider.USE_CASE_3_DEST_OBJECT_2%>">download</a></li>
+                <li>View the second generated object: <a href="${path}/download/testObject3-o2">download</a></li>
             </c:if>
         </ul>
     </form>

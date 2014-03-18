@@ -1,17 +1,15 @@
 package org.javaswift.joss.tutorial;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
 
+import eu.medsea.mimeutil.MimeUtil;
 import org.javaswift.joss.model.Account;
 import org.javaswift.joss.model.Container;
 import org.javaswift.joss.model.StoredObject;
@@ -34,24 +32,61 @@ import org.springframework.web.servlet.view.RedirectView;
 @Controller
 public class StreamingController {
 
+    public static final String TUTORIAL_CONTAINER = "tutorial-joss-streaming";
+    public static final String USE_CASE_1_RESOURCE = "/Cloud-Computing.jpg";
+    public static final String USE_CASE_1_OBJECT = "testObject1";
+    public static final String USE_CASE_2_OBJECT = "testObject2";
+    public static final String USE_CASE_3_SRC_OBJECT = "testObject3-i";
+    public static final String USE_CASE_3_DEST_OBJECT_1 = "testObject3-o1";
+    public static final String USE_CASE_3_DEST_OBJECT_2 = "testObject3-o2";
+
+    public static final int MIME_MAGIC_BUFFER_SIZE = 32;
+
+    @Autowired
+    Account account;
+
     /**
      * Content type to use when none is given.
      */
     public static final String DEFAULT_BINARY_CONTENT_TYPE = "application/octet-stream";
-    /**
-     * The storage provider we'll use. This logs in and provides us with the logged in account.
-     */
-    private StorageProvider storageProvider;
 
     /**
      * Create a streaming controller.
-     *
-     * @param storageProvider the storage provider to use
      */
-    @Autowired
-    public StreamingController(StorageProvider storageProvider) {
+    public StreamingController() {
+        MimeUtil.registerMimeDetector("eu.medsea.mimeutil.detector.MagicMimeMimeDetector");
+    }
 
-        this.storageProvider = storageProvider;
+    @PostConstruct
+    public void initializeStorage() throws IOException {
+
+        Container container = account.getContainer(TUTORIAL_CONTAINER);
+        if (container.exists()) {
+            emptyContainer(container);
+        } else {
+            container.create();
+        }
+        if (container.isPublic()) {
+            container.makePrivate();
+        }
+
+        addInitialContent(container);
+    }
+
+    private void emptyContainer(Container container) {
+
+        for (StoredObject storedObject : container.list()) {
+            storedObject.delete();
+        }
+    }
+
+    private void addInitialContent(Container container) throws IOException {
+
+        StoredObject object1 = container.getObject(USE_CASE_1_OBJECT);
+        streamUpload(object1, getClass().getResourceAsStream(USE_CASE_1_RESOURCE));
+
+        StoredObject object3s = container.getObject(USE_CASE_3_SRC_OBJECT);
+        object1.copyObject(container, object3s);
     }
 
     /**
@@ -63,9 +98,9 @@ public class StreamingController {
     public ModelAndView showIndexPage() {
 
         Container container = getTutorialContainer();
-        StoredObject useCase2Object = container.getObject(StorageProvider.USE_CASE_2_OBJECT);
-        StoredObject useCase3Object1 = container.getObject(StorageProvider.USE_CASE_3_DEST_OBJECT_1);
-        StoredObject useCase3Object2 = container.getObject(StorageProvider.USE_CASE_3_DEST_OBJECT_2);
+        StoredObject useCase2Object = container.getObject(USE_CASE_2_OBJECT);
+        StoredObject useCase3Object1 = container.getObject(USE_CASE_3_DEST_OBJECT_1);
+        StoredObject useCase3Object2 = container.getObject(USE_CASE_3_DEST_OBJECT_2);
 
         Map<String, Object> model = new HashMap<String, Object>();
         model.put("useCase2_ObjectExists", useCase2Object.exists());
@@ -76,9 +111,7 @@ public class StreamingController {
     }
 
     private Container getTutorialContainer() {
-
-        Account account = storageProvider.getAccount();
-        return account.getContainer(StorageProvider.TUTORIAL_CONTAINER);
+        return account.getContainer(TUTORIAL_CONTAINER);
     }
 
     /**
@@ -143,10 +176,30 @@ public class StreamingController {
 
         Container container = getTutorialContainer();
 
-        StoredObject newUpload = container.getObject(StorageProvider.USE_CASE_2_OBJECT);
-        storageProvider.streamUpload(newUpload, file.getInputStream());
+        StoredObject newUpload = container.getObject(USE_CASE_2_OBJECT);
+        streamUpload(newUpload, file.getInputStream());
 
         return redirectToIndexPage();
+    }
+
+    public void streamUpload(StoredObject storedObject, InputStream stream) throws IOException {
+
+        // A content type can be determined from the first 32 bytes. Get them while ensuring the InputStream remains complete.
+
+        byte[] mimeMagicBuffer = new byte[MIME_MAGIC_BUFFER_SIZE];
+        PushbackInputStream pushbackInputStream = new PushbackInputStream(stream, MIME_MAGIC_BUFFER_SIZE);
+
+        int magicBytesRead = pushbackInputStream.read(mimeMagicBuffer);
+        pushbackInputStream.unread(mimeMagicBuffer, 0, magicBytesRead);
+
+        // Determine the MIME type.
+
+        String contentType = MimeUtil.getMostSpecificMimeType(MimeUtil.getMimeTypes(mimeMagicBuffer)).toString();
+
+        // Do the actual upload.
+
+        storedObject.uploadObject(pushbackInputStream);
+        storedObject.setContentType(contentType);
     }
 
     private View redirectToIndexPage() {
@@ -166,23 +219,23 @@ public class StreamingController {
 
         // Load the original image.
 
-        StoredObject source = container.getObject(StorageProvider.USE_CASE_3_SRC_OBJECT);
+        StoredObject source = container.getObject(USE_CASE_3_SRC_OBJECT);
         InputStream readingInputStream = source.downloadObjectAsInputStream();
         BufferedImage originalImage = ImageIO.read(readingInputStream);
 
         // Store as-is as first generated image.
 
-        StoredObject dest1 = container.getObject(StorageProvider.USE_CASE_3_DEST_OBJECT_1);
+        StoredObject dest1 = container.getObject(USE_CASE_3_DEST_OBJECT_1);
         InputStream uploadSourceStream1 = createInputStream(originalImage);
-        storageProvider.streamUpload(dest1, uploadSourceStream1);
+        streamUpload(dest1, uploadSourceStream1);
 
         // Generate a thumbnail from it and store that as second generated image.
 
         BufferedImage resizedImage = ImageUtils.scaleImage(originalImage, 200, 200);
 
-        StoredObject dest2 = container.getObject(StorageProvider.USE_CASE_3_DEST_OBJECT_2);
+        StoredObject dest2 = container.getObject(USE_CASE_3_DEST_OBJECT_2);
         InputStream uploadSourceStream2 = createInputStream(resizedImage);
-        storageProvider.streamUpload(dest2, uploadSourceStream2);
+        streamUpload(dest2, uploadSourceStream2);
 
         return redirectToIndexPage();
     }
@@ -204,9 +257,9 @@ public class StreamingController {
     public View clearGeneratedContent() {
 
         Container container = getTutorialContainer();
-        deleteIfPresent(container, StorageProvider.USE_CASE_2_OBJECT);
-        deleteIfPresent(container, StorageProvider.USE_CASE_3_DEST_OBJECT_1);
-        deleteIfPresent(container, StorageProvider.USE_CASE_3_DEST_OBJECT_2);
+        deleteIfPresent(container, USE_CASE_2_OBJECT);
+        deleteIfPresent(container, USE_CASE_3_DEST_OBJECT_1);
+        deleteIfPresent(container, USE_CASE_3_DEST_OBJECT_2);
 
         return redirectToIndexPage();
     }
